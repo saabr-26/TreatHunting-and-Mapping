@@ -1,0 +1,242 @@
+[
+  {
+    "model": "detections.huntquery",
+    "pk": 1,
+    "fields": {
+      "name": "Failed Logins",
+      "category": "authentication",
+      "description": "Detect failed login attempts which may indicate brute-force or unauthorized access attempts.",
+      "hypothesis": "An attacker may be attempting to gain access through password guessing or brute-force attacks.",
+      "spl": "index=threathunt EventCode=4625 | stats count by user, src_ip, host | sort -count",
+      "data_source": "Windows Security Logs",
+      "expected_evidence": "Multiple failed login events (4625) from same source IP or targeting same user account.",
+      "investigation_notes": "Check if failed logins are followed by a successful login (4624). Review the source IP reputation. Verify if the account exists.",
+      "enabled": true,
+      "mitre_technique": 14
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 2,
+    "fields": {
+      "name": "Successful Logins",
+      "category": "authentication",
+      "description": "Review successful login events to identify unusual access patterns.",
+      "hypothesis": "An attacker may use valid credentials to access systems at unusual times or from unusual locations.",
+      "spl": "index=threathunt EventCode=4624 | stats count by user, src_ip, LogonType, host | sort -count",
+      "data_source": "Windows Security Logs",
+      "expected_evidence": "Login events (4624) from unexpected IPs, at unusual hours, or with unusual logon types.",
+      "investigation_notes": "Compare against known user behavior patterns. Check LogonType: 2=Interactive, 3=Network, 10=RemoteInteractive(RDP).",
+      "enabled": true,
+      "mitre_technique": 1
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 3,
+    "fields": {
+      "name": "Brute Force Detection",
+      "category": "authentication",
+      "description": "Detect multiple failed logins followed by a successful login, indicating potential brute-force success.",
+      "hypothesis": "An attacker may have successfully brute-forced a user account password.",
+      "spl": "index=threathunt (EventCode=4625 OR EventCode=4624) | stats count(eval(EventCode=4625)) as failures, count(eval(EventCode=4624)) as successes by user, src_ip | where failures > 5 AND successes > 0 | sort -failures",
+      "data_source": "Windows Security Logs",
+      "expected_evidence": "High number of failed logins followed by a successful login from the same source.",
+      "investigation_notes": "This is a strong indicator of brute-force. Check the timing between failures and success. Review what the account did after successful login.",
+      "enabled": true,
+      "mitre_technique": 14
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 4,
+    "fields": {
+      "name": "New Account Creation",
+      "category": "account_management",
+      "description": "Detect creation of new local user accounts.",
+      "hypothesis": "An attacker may create a new local account for persistence.",
+      "spl": "index=threathunt EventCode=4720 | table _time, host, SubjectUserName, TargetUserName, SubjectDomainName | sort -_time",
+      "data_source": "Windows Security Logs",
+      "expected_evidence": "Event 4720 showing a new account being created, especially by non-standard accounts.",
+      "investigation_notes": "Check who created the account (SubjectUserName). Verify if this was an authorized change. Look for subsequent privileged group additions (4732, 4728).",
+      "enabled": true,
+      "mitre_technique": 4
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 5,
+    "fields": {
+      "name": "Privileged Group Membership Changes",
+      "category": "privilege_escalation",
+      "description": "Detect when users are added to privileged groups (Administrators, Domain Admins, etc.).",
+      "hypothesis": "An attacker may escalate privileges by adding a compromised or newly created account to an administrator group.",
+      "spl": "index=threathunt (EventCode=4728 OR EventCode=4732 OR EventCode=4756) | table _time, host, SubjectUserName, MemberName, TargetUserName, GroupName | sort -_time",
+      "data_source": "Windows Security Logs",
+      "expected_evidence": "Events showing users being added to privileged security groups.",
+      "investigation_notes": "Cross-reference with account creation events. Verify if the group change was authorized. Check what the newly privileged account did afterward.",
+      "enabled": true,
+      "mitre_technique": 5
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 6,
+    "fields": {
+      "name": "PowerShell Execution",
+      "category": "powershell",
+      "description": "Detect PowerShell process execution, especially with suspicious parameters.",
+      "hypothesis": "An attacker may use PowerShell for command execution, script downloads, or lateral movement.",
+      "spl": "index=threathunt (EventCode=4688 OR EventCode=1) (NewProcessName=\"*powershell*\" OR Image=\"*powershell*\" OR ParentImage=\"*powershell*\") | table _time, host, user, CommandLine, ParentImage, Image, NewProcessName | sort -_time",
+      "data_source": "Windows Security Logs, Sysmon",
+      "expected_evidence": "PowerShell processes, especially those with encoded commands (-enc), download cradles, or running from unusual parents.",
+      "investigation_notes": "Decode any base64 encoded commands. Check the parent process — is it unusual (e.g., winword.exe spawning powershell)? Review network connections made by PowerShell.",
+      "enabled": true,
+      "mitre_technique": 2
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 7,
+    "fields": {
+      "name": "Encoded PowerShell Commands",
+      "category": "powershell",
+      "description": "Detect PowerShell with encoded or obfuscated command-line arguments.",
+      "hypothesis": "An attacker may encode PowerShell commands to evade detection.",
+      "spl": "index=threathunt (EventCode=4688 OR EventCode=1) (CommandLine=\"*-enc*\" OR CommandLine=\"*-encodedcommand*\" OR CommandLine=\"*-e *\" OR CommandLine=\"*FromBase64*\" OR CommandLine=\"*[Convert]*\") | table _time, host, user, CommandLine, ParentImage | sort -_time",
+      "data_source": "Windows Security Logs, Sysmon",
+      "expected_evidence": "PowerShell processes with -enc, -encodedcommand, or Base64 decoding in the command line.",
+      "investigation_notes": "Decode the Base64 payload to understand what it actually does. This is a strong indicator of malicious activity but can also be used by legitimate admin scripts.",
+      "enabled": true,
+      "mitre_technique": 2
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 8,
+    "fields": {
+      "name": "Suspicious Command Shell Execution",
+      "category": "command_shell",
+      "description": "Detect cmd.exe execution with suspicious parent processes or command patterns.",
+      "hypothesis": "An attacker may use cmd.exe for command execution or to chain commands.",
+      "spl": "index=threathunt (EventCode=4688 OR EventCode=1) (NewProcessName=\"*cmd.exe*\" OR Image=\"*cmd.exe*\") | table _time, host, user, CommandLine, ParentImage, Image | sort -_time",
+      "data_source": "Windows Security Logs, Sysmon",
+      "expected_evidence": "cmd.exe launched by unusual parent processes or with suspicious command patterns.",
+      "investigation_notes": "Review the parent process — was cmd.exe spawned by a document editor, browser, or service? Check if the command line reveals reconnaissance or malicious activity.",
+      "enabled": true,
+      "mitre_technique": 3
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 9,
+    "fields": {
+      "name": "New Service Installation",
+      "category": "persistence",
+      "description": "Detect installation of new Windows services which may be used for persistence.",
+      "hypothesis": "An attacker may install a malicious service for persistence.",
+      "spl": "index=threathunt EventCode=7045 | table _time, host, ServiceName, ImagePath, ServiceType, StartType, AccountName | sort -_time",
+      "data_source": "Windows System Logs",
+      "expected_evidence": "New service installations (7045), especially with unusual service names, image paths, or running as SYSTEM.",
+      "investigation_notes": "Verify if the service is legitimate. Check the ImagePath for suspicious executables. Review if the service was installed during off-hours.",
+      "enabled": true,
+      "mitre_technique": 6
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 10,
+    "fields": {
+      "name": "Process Creation Analysis",
+      "category": "process_creation",
+      "description": "Analyze process creation events to identify suspicious parent-child relationships.",
+      "hypothesis": "An attacker may create processes with unusual parent-child relationships indicating exploitation.",
+      "spl": "index=threathunt (EventCode=4688 OR EventCode=1) | table _time, host, user, NewProcessName, Image, ParentImage, CommandLine, ProcessId, ParentProcessId | sort -_time | head 200",
+      "data_source": "Windows Security Logs, Sysmon",
+      "expected_evidence": "Unusual process trees (e.g., winword.exe → powershell.exe → cmd.exe).",
+      "investigation_notes": "Focus on processes spawned by document editors, browsers, or services. Look for LOLBins (Living Off The Land Binaries) like rundll32, mshta, regsvr32.",
+      "enabled": true,
+      "mitre_technique": null
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 11,
+    "fields": {
+      "name": "RDP Activity",
+      "category": "lateral_movement",
+      "description": "Detect Remote Desktop Protocol (RDP) logins and activity.",
+      "hypothesis": "An attacker may use RDP for lateral movement after obtaining valid credentials.",
+      "spl": "index=threathunt EventCode=4624 LogonType=10 | stats count by user, src_ip, host | sort -count",
+      "data_source": "Windows Security Logs",
+      "expected_evidence": "RDP logins (LogonType=10) from unusual source IPs or to sensitive systems.",
+      "investigation_notes": "Verify if the RDP session was authorized. Check what the user did during the session. Review if there are multiple RDP sessions from the same source.",
+      "enabled": true,
+      "mitre_technique": 10
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 12,
+    "fields": {
+      "name": "SMB/Network Logons",
+      "category": "lateral_movement",
+      "description": "Detect network logons via SMB which may indicate lateral movement.",
+      "hypothesis": "An attacker may use SMB for lateral movement or to access network shares.",
+      "spl": "index=threathunt EventCode=4624 LogonType=3 | stats count by user, src_ip, host | sort -count",
+      "data_source": "Windows Security Logs",
+      "expected_evidence": "Network logons (LogonType=3) from unusual sources or in unusual patterns.",
+      "investigation_notes": "Not all LogonType=3 is malicious — file shares generate these too. Focus on unusual source IPs and access to sensitive systems.",
+      "enabled": true,
+      "mitre_technique": 11
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 13,
+    "fields": {
+      "name": "Archive/Compression Utility Usage",
+      "category": "collection",
+      "description": "Detect use of archive utilities that may indicate data staging or exfiltration preparation.",
+      "hypothesis": "An attacker may compress collected data before exfiltration.",
+      "spl": "index=threathunt (EventCode=4688 OR EventCode=1) (CommandLine=\"*7z*\" OR CommandLine=\"*rar*\" OR CommandLine=\"*zip*\" OR CommandLine=\"*tar*\" OR Image=\"*7z*\" OR Image=\"*WinRAR*\") | table _time, host, user, CommandLine, Image, ParentImage | sort -_time",
+      "data_source": "Windows Security Logs, Sysmon",
+      "expected_evidence": "Execution of archiving utilities, especially targeting sensitive directories.",
+      "investigation_notes": "Check what files/folders are being archived. Review if the archive is then moved to an external location. Verify if the archiving was part of normal operations.",
+      "enabled": true,
+      "mitre_technique": 12
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 14,
+    "fields": {
+      "name": "LSASS Access Detection",
+      "category": "credential_access",
+      "description": "Detect processes accessing LSASS memory, which may indicate credential dumping.",
+      "hypothesis": "An attacker may attempt to dump credentials from LSASS process memory.",
+      "spl": "index=threathunt EventCode=10 TargetImage=\"*lsass.exe\" | table _time, host, user, SourceImage, TargetImage, GrantedAccess, CallTrace | sort -_time",
+      "data_source": "Sysmon",
+      "expected_evidence": "Sysmon Event ID 10 showing process access to lsass.exe, especially from unusual source processes.",
+      "investigation_notes": "Some legitimate processes access LSASS (e.g., antivirus). Focus on unusual SourceImage values and GrantedAccess flags (0x1010, 0x1FFFFF are suspicious). Distinguish observed evidence from confirmed credential theft.",
+      "enabled": true,
+      "mitre_technique": 9
+    }
+  },
+  {
+    "model": "detections.huntquery",
+    "pk": 15,
+    "fields": {
+      "name": "Privileged Account Usage",
+      "category": "privilege_escalation",
+      "description": "Detect usage of special privileges assigned to new logon sessions.",
+      "hypothesis": "An attacker may use privileged accounts for malicious activity after gaining access.",
+      "spl": "index=threathunt EventCode=4672 | stats count by user, host | sort -count",
+      "data_source": "Windows Security Logs",
+      "expected_evidence": "Privileged logons (4672) by unusual accounts or at unusual times.",
+      "investigation_notes": "EventCode 4672 fires when special privileges are assigned. Common for SYSTEM and administrator accounts. Focus on non-service accounts receiving privileges.",
+      "enabled": true,
+      "mitre_technique": 1
+    }
+  }
+]

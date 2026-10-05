@@ -1,0 +1,198 @@
+[
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 1,
+    "fields": {
+      "technique_id": "T1078",
+      "name": "Valid Accounts",
+      "tactic": "initial_access",
+      "description": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1078/",
+      "trigger_evidence": "EventCode=4624 from unusual IP or at unusual time"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 2,
+    "fields": {
+      "technique_id": "T1059.001",
+      "name": "PowerShell",
+      "tactic": "execution",
+      "description": "Adversaries may abuse PowerShell commands and scripts for execution. PowerShell is included in all versions of Windows.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1059/001/",
+      "trigger_evidence": "Process creation with powershell.exe, especially with -enc or -encodedcommand flags"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 3,
+    "fields": {
+      "technique_id": "T1059.003",
+      "name": "Windows Command Shell",
+      "tactic": "execution",
+      "description": "Adversaries may abuse the Windows command shell (cmd.exe) for execution.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1059/003/",
+      "trigger_evidence": "cmd.exe launched by unusual parent process or with suspicious command line"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 4,
+    "fields": {
+      "technique_id": "T1136.001",
+      "name": "Create Account: Local Account",
+      "tactic": "persistence",
+      "description": "Adversaries may create a local account to maintain access to victim systems.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1136/001/",
+      "trigger_evidence": "EventCode=4720 (new user account created)"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 5,
+    "fields": {
+      "technique_id": "T1098",
+      "name": "Account Manipulation",
+      "tactic": "persistence",
+      "description": "Adversaries may manipulate accounts to maintain access to victim systems, such as modifying group membership.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1098/",
+      "trigger_evidence": "EventCode=4728, 4732, 4756 (user added to privileged group)"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 6,
+    "fields": {
+      "technique_id": "T1543.003",
+      "name": "Create or Modify System Process: Windows Service",
+      "tactic": "persistence",
+      "description": "Adversaries may create or modify Windows services to repeatedly execute malicious payloads.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1543/003/",
+      "trigger_evidence": "EventCode=7045 (new service installed)"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 7,
+    "fields": {
+      "technique_id": "T1053.005",
+      "name": "Scheduled Task/Job: Scheduled Task",
+      "tactic": "persistence",
+      "description": "Adversaries may abuse task scheduling to execute malicious code at system startup or on a scheduled basis.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1053/005/",
+      "trigger_evidence": "Scheduled task creation events"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 8,
+    "fields": {
+      "technique_id": "T1547.001",
+      "name": "Boot or Logon Autostart Execution: Registry Run Keys",
+      "tactic": "persistence",
+      "description": "Adversaries may achieve persistence by adding a program to a startup folder or registering it with a Registry run key.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1547/001/",
+      "trigger_evidence": "Sysmon registry modification events on Run/RunOnce keys"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 9,
+    "fields": {
+      "technique_id": "T1003.001",
+      "name": "OS Credential Dumping: LSASS Memory",
+      "tactic": "credential_access",
+      "description": "Adversaries may attempt to access credential material stored in the process memory of LSASS.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1003/001/",
+      "trigger_evidence": "Sysmon process access events targeting lsass.exe"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 10,
+    "fields": {
+      "technique_id": "T1021.001",
+      "name": "Remote Services: Remote Desktop Protocol",
+      "tactic": "lateral_movement",
+      "description": "Adversaries may use Valid Accounts to log into a computer using RDP.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1021/001/",
+      "trigger_evidence": "EventCode=4624 with LogonType=10 (RemoteInteractive)"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 11,
+    "fields": {
+      "technique_id": "T1021.002",
+      "name": "Remote Services: SMB/Windows Admin Shares",
+      "tactic": "lateral_movement",
+      "description": "Adversaries may use Valid Accounts to interact with a remote network share using SMB.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1021/002/",
+      "trigger_evidence": "EventCode=4624 with LogonType=3 + share access events"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 12,
+    "fields": {
+      "technique_id": "T1560",
+      "name": "Archive Collected Data",
+      "tactic": "collection",
+      "description": "An adversary may compress and/or encrypt data prior to exfiltration using common utilities.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1560/",
+      "trigger_evidence": "Process creation of 7zip, WinRAR, tar, or similar archive utilities"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 13,
+    "fields": {
+      "technique_id": "T1087.001",
+      "name": "Account Discovery: Local Account",
+      "tactic": "discovery",
+      "description": "Adversaries may attempt to get a listing of local system accounts.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1087/001/",
+      "trigger_evidence": "Commands like net user, net localgroup"
+    }
+  },
+  {
+    "model": "mitre.mitretechnique",
+    "pk": 14,
+    "fields": {
+      "technique_id": "T1110.001",
+      "name": "Brute Force: Password Guessing",
+      "tactic": "credential_access",
+      "description": "Adversaries may brute force passwords to gain access to accounts.",
+      "evidence_count": 0,
+      "confidence": "unconfirmed",
+      "url": "https://attack.mitre.org/techniques/T1110/001/",
+      "trigger_evidence": "Multiple EventCode=4625 (failed logons) from same source in short time"
+    }
+  }
+]

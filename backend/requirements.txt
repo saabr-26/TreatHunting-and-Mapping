@@ -1,0 +1,12 @@
+django>=4.2,<5.0
+djangorestframework>=3.14,<4.0
+djangorestframework-simplejwt>=5.3,<6.0
+django-cors-headers>=4.3,<5.0
+django-filter>=23.0,<24.0
+python-dotenv>=1.0,<2.0
+requests>=2.31,<3.0
+splunk-sdk>=2.0,<3.0
+reportlab>=4.0,<5.0
+gunicorn>=21.0,<22.0
+pytest>=7.0,<8.0
+pytest-django>=4.5,<5.0
