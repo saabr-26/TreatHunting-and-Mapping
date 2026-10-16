@@ -74,8 +74,8 @@ class MITRETechnique(models.Model):
         help_text="What evidence triggers this technique mapping"
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
         ordering = ["tactic", "technique_id"]
